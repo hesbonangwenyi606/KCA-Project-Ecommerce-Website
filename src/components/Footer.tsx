@@ -28,19 +28,19 @@ const Footer: React.FC = () => {
         <div>
           <h4 className="text-white font-semibold mb-3">Help</h4>
           <ul className="space-y-2 text-sm">
-            <li><Link to="/products" className="hover:text-white">Shipping Info</Link></li>
-            <li><Link to="/products" className="hover:text-white">Returns</Link></li>
-            <li><Link to="/products" className="hover:text-white">FAQ</Link></li>
-            <li><Link to="/products" className="hover:text-white">Contact Us</Link></li>
+            <li><Link to="/info/shipping-info" className="hover:text-white">Shipping Info</Link></li>
+            <li><Link to="/info/returns" className="hover:text-white">Returns</Link></li>
+            <li><Link to="/info/faq" className="hover:text-white">FAQ</Link></li>
+            <li><Link to="/info/contact-us" className="hover:text-white">Contact Us</Link></li>
           </ul>
         </div>
         <div>
           <h4 className="text-white font-semibold mb-3">Company</h4>
           <ul className="space-y-2 text-sm">
-            <li><Link to="/products" className="hover:text-white">About</Link></li>
-            <li><Link to="/products" className="hover:text-white">Careers</Link></li>
-            <li><Link to="/products" className="hover:text-white">Privacy Policy</Link></li>
-            <li><Link to="/products" className="hover:text-white">Terms</Link></li>
+            <li><Link to="/info/about" className="hover:text-white">About</Link></li>
+            <li><Link to="/info/careers" className="hover:text-white">Careers</Link></li>
+            <li><Link to="/info/privacy-policy" className="hover:text-white">Privacy Policy</Link></li>
+            <li><Link to="/info/terms" className="hover:text-white">Terms</Link></li>
           </ul>
         </div>
       </div>
