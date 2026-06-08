@@ -165,5 +165,4 @@ Through this project, the following concepts were applied:
 ---
 
 ## License
-
 This project is developed for educational and learning purposes as part of KCA University coursework.
