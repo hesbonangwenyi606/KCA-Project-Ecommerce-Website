@@ -54,7 +54,7 @@ This project was developed as part of the KCA University Software Engineering co
 * ESLint
 * PostCSS
 
-### Backend & Database (Planned)
+### Backend & Database
 
 * Node.js
 * Express.js
