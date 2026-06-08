@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Heart, Menu, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface Collection { id: string; title: string; handle: string; }
 
@@ -10,17 +12,56 @@ const Header: React.FC = () => {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [search, setSearch] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [session, setSession] = useState<Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session'] | null>(null);
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
   const { cartCount, wishlist } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
     supabase.from('ecom_collections').select('id,title,handle').eq('is_visible', true).order('sort_order')
       .then(({ data }) => setCollections(data || []));
+
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (search.trim()) navigate(`/products?q=${encodeURIComponent(search.trim())}`);
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      setEmail('');
+      setPassword('');
+    }
+
+    setAuthLoading(false);
+  };
+
+  const handleSignOut = async () => {
+    setAuthError('');
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      setAuthError(error.message);
+    }
   };
 
   return (
@@ -49,6 +90,32 @@ const Header: React.FC = () => {
               className="bg-transparent outline-none text-sm px-2 w-full" />
           </form>
           <div className="flex items-center gap-4">
+            {session ? (
+              <div className="hidden md:flex items-center gap-2 text-sm text-gray-700">
+                <span className="rounded-full bg-gray-100 px-3 py-1">Hi, {session.user.email?.split('@')[0]}</span>
+                <Button variant="outline" size="sm" onClick={handleSignOut} disabled={authLoading}>Sign out</Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSignIn} className="hidden lg:flex items-center gap-2">
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-9 w-44"
+                  required
+                />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-9 w-36"
+                  required
+                />
+                <Button type="submit" size="sm" disabled={authLoading}>{authLoading ? 'Signing in...' : 'Sign in'}</Button>
+              </form>
+            )}
             <Link to="/wishlist" className="relative">
               <Heart size={22} className="text-gray-700 hover:text-[#FF6B6B]" />
               {wishlist.length > 0 && (
@@ -65,7 +132,7 @@ const Header: React.FC = () => {
         </div>
       </div>
       {mobileOpen && (
-        <div className="lg:hidden border-t border-gray-100 px-4 py-3 space-y-2">
+        <div className="lg:hidden border-t border-gray-100 px-4 py-3 space-y-3">
           <form onSubmit={submitSearch} className="flex items-center bg-gray-100 rounded-full px-3 py-2 mb-2">
             <Search size={16} className="text-gray-400" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="bg-transparent outline-none text-sm px-2 w-full" />
@@ -75,6 +142,16 @@ const Header: React.FC = () => {
               {c.title}
             </Link>
           ))}
+          {session ? (
+            <Button variant="outline" onClick={() => { handleSignOut(); setMobileOpen(false); }} className="w-full">Sign out</Button>
+          ) : (
+            <form onSubmit={handleSignIn} className="space-y-2">
+              <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <Button type="submit" className="w-full" disabled={authLoading}>{authLoading ? 'Signing in...' : 'Sign in'}</Button>
+            </form>
+          )}
+          {authError && <p className="text-sm text-[#FF6B6B]">{authError}</p>}
         </div>
       )}
     </header>
