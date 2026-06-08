@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { apiFetch } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -15,19 +15,16 @@ const CollectionPage: React.FC = () => {
     const run = async () => {
       if (!handle) return;
       setLoading(true);
-      try {
-        const data = await apiFetch<{ collection: any; products: any[] }>(`/api/collections/${handle}`);
-        setCollection(data.collection || null);
-        setProducts(data.products || []);
-      } catch (error) {
-        console.error('Failed to load collection', error);
-        setCollection(null);
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
+      const { data: col } = await supabase.from('ecom_collections').select('*').eq('handle', handle).single();
+      if (!col) { setLoading(false); return; }
+      setCollection(col);
+      const { data: links } = await supabase.from('ecom_product_collections').select('product_id, position').eq('collection_id', col.id).order('position');
+      if (!links?.length) { setProducts([]); setLoading(false); return; }
+      const ids = links.map(l => l.product_id);
+      const { data: prods } = await supabase.from('ecom_products').select('*, variants:ecom_product_variants(*)').in('id', ids).eq('status', 'active');
+      setProducts(ids.map(id => prods?.find(p => p.id === id)).filter(Boolean));
+      setLoading(false);
     };
-
     run();
   }, [handle]);
 

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Heart, Menu, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { apiFetch } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,16 +21,8 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadCollections = async () => {
-      try {
-        const { collections } = await apiFetch<{ collections: Collection[] }>('/api/collections');
-        setCollections(collections || []);
-      } catch (error) {
-        console.error('Failed to load collections for header', error);
-      }
-    };
-
-    loadCollections();
+    supabase.from('ecom_collections').select('id,title,handle').eq('is_visible', true).order('sort_order')
+      .then(({ data }) => setCollections(data || []));
 
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
 

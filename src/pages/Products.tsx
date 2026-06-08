@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { apiFetch } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
@@ -15,19 +15,9 @@ const Products: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState(250);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const { products } = await apiFetch<{ products: any[] }>('/api/products');
-        setProducts(products || []);
-      } catch (error) {
-        console.error('Failed to load products', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
+    setLoading(true);
+    supabase.from('ecom_products').select('*, variants:ecom_product_variants(*)').eq('status', 'active')
+      .then(({ data }) => { setProducts(data || []); setLoading(false); });
   }, []);
 
   const types = useMemo(() => ['All', ...Array.from(new Set(products.map(p => p.product_type).filter(Boolean)))], [products]);

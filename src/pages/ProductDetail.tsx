@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { apiFetch } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { Heart, ShoppingBag, Star, Truck, RefreshCw, ShieldCheck, Minus, Plus } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -23,29 +23,23 @@ const ProductDetail: React.FC = () => {
     const run = async () => {
       if (!handle) return;
       setSelectedVariant(null); setSelectedSize(''); setQuantity(1); setAdded(false);
-
-      try {
-        const response = await apiFetch<{ product: any }>('/api/products/' + encodeURIComponent(handle));
-        const data = response.product;
-        if (!data) return;
-
-        const variants = [...(data.variants || [])].sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
-        data.variants = variants;
-        setProduct(data);
-
-        if (variants.length) {
-          const first = variants.find((v: any) => v.inventory_qty == null || v.inventory_qty > 0) || variants[0];
-          setSelectedVariant(first);
-          setSelectedSize(first?.option1 || '');
-        }
-
-        const allProducts = await apiFetch<{ products: any[] }>('/api/products');
-        setRelated((allProducts.products || []).filter((item) => item.product_type === data.product_type && item.id !== data.id).slice(0, 4));
-      } catch (error) {
-        console.error('Failed to load product details', error);
+      const { data } = await supabase.from('ecom_products').select('*, variants:ecom_product_variants(*)').eq('handle', handle).single();
+      if (!data) return;
+      let variants = data.variants || [];
+      if (data.has_variants && variants.length === 0) {
+        const { data: vd } = await supabase.from('ecom_product_variants').select('*').eq('product_id', data.id).order('position');
+        variants = vd || []; data.variants = variants;
       }
+      variants = [...variants].sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+      data.variants = variants;
+      setProduct(data);
+      if (variants.length) {
+        const first = variants.find((v: any) => v.inventory_qty == null || v.inventory_qty > 0) || variants[0];
+        setSelectedVariant(first); setSelectedSize(first?.option1 || '');
+      }
+      supabase.from('ecom_products').select('*, variants:ecom_product_variants(*)').eq('product_type', data.product_type)
+        .neq('id', data.id).eq('status', 'active').limit(4).then(({ data: rel }) => setRelated(rel || []));
     };
-
     run();
   }, [handle]);
 

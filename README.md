@@ -115,6 +115,17 @@ npm run dev:all
 
 Run the SQL in [supabase/migrations/001_add_product_performance_indexes.sql](supabase/migrations/001_add_product_performance_indexes.sql) in the Supabase SQL Editor to speed up product, collection, and variant queries.
 
+### Vercel deployment (free database)
+
+Set these variables in Vercel → Project Settings → Environment Variables:
+
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+
+Use the values from your free Supabase project. You can copy the sample file [.env.example](.env.example) as a starting point.
+
 The application will be available at:
 
 ```text
