@@ -93,11 +93,27 @@ cd KCA-Project-Ecommerce-Website
 npm install
 ```
 
-### Run the Development Server
+### Run the Frontend
 
 ```bash
 npm run dev
 ```
+
+### Run the Backend API
+
+```bash
+npm run server
+```
+
+### Run Both Together
+
+```bash
+npm run dev:all
+```
+
+### Apply Database Performance Indexes
+
+Run the SQL in [supabase/migrations/001_add_product_performance_indexes.sql](supabase/migrations/001_add_product_performance_indexes.sql) in the Supabase SQL Editor to speed up product, collection, and variant queries.
 
 The application will be available at:
 
@@ -109,10 +125,22 @@ http://localhost:5173
 
 ## Available Scripts
 
-### Start Development Server
+### Start Frontend
 
 ```bash
 npm run dev
+```
+
+### Start Backend
+
+```bash
+npm run server
+```
+
+### Start Frontend + Backend
+
+```bash
+npm run dev:all
 ```
 
 ### Build for Production

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Heart, Menu, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { apiFetch } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,8 +22,16 @@ const Header: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.from('ecom_collections').select('id,title,handle').eq('is_visible', true).order('sort_order')
-      .then(({ data }) => setCollections(data || []));
+    const loadCollections = async () => {
+      try {
+        const { collections } = await apiFetch<{ collections: Collection[] }>('/api/collections');
+        setCollections(collections || []);
+      } catch (error) {
+        console.error('Failed to load collections for header', error);
+      }
+    };
+
+    loadCollections();
 
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
 
@@ -96,25 +105,14 @@ const Header: React.FC = () => {
                 <Button variant="outline" size="sm" onClick={handleSignOut} disabled={authLoading}>Sign out</Button>
               </div>
             ) : (
-              <form onSubmit={handleSignIn} className="hidden lg:flex items-center gap-2">
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-9 w-44"
-                  required
-                />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-9 w-36"
-                  required
-                />
-                <Button type="submit" size="sm" disabled={authLoading}>{authLoading ? 'Signing in...' : 'Sign in'}</Button>
-              </form>
+              <div className="hidden lg:flex items-center gap-2">
+                <Link to="/signin">
+                  <Button variant="outline" size="sm">Sign in</Button>
+                </Link>
+                <Link to="/signin">
+                  <Button size="sm">Create account</Button>
+                </Link>
+              </div>
             )}
             <Link to="/wishlist" className="relative">
               <Heart size={22} className="text-gray-700 hover:text-[#FF6B6B]" />
@@ -145,11 +143,14 @@ const Header: React.FC = () => {
           {session ? (
             <Button variant="outline" onClick={() => { handleSignOut(); setMobileOpen(false); }} className="w-full">Sign out</Button>
           ) : (
-            <form onSubmit={handleSignIn} className="space-y-2">
-              <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              <Input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              <Button type="submit" className="w-full" disabled={authLoading}>{authLoading ? 'Signing in...' : 'Sign in'}</Button>
-            </form>
+            <div className="space-y-2">
+              <Link to="/signin" onClick={() => setMobileOpen(false)}>
+                <Button className="w-full">Sign in</Button>
+              </Link>
+              <Link to="/signin" onClick={() => setMobileOpen(false)}>
+                <Button variant="outline" className="w-full">Create account</Button>
+              </Link>
+            </div>
           )}
           {authError && <p className="text-sm text-[#FF6B6B]">{authError}</p>}
         </div>

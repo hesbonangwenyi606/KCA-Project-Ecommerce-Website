@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { apiFetch } from '@/lib/api';
 import { Truck, ShieldCheck, RefreshCw, Headphones } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -14,10 +14,21 @@ const Home: React.FC = () => {
   const [collections, setCollections] = useState<any[]>([]);
 
   useEffect(() => {
-    supabase.from('ecom_products').select('*, variants:ecom_product_variants(*)').eq('status', 'active')
-      .contains('tags', ['featured']).limit(8).then(({ data }) => setFeatured(data || []));
-    supabase.from('ecom_collections').select('*').eq('is_visible', true).neq('handle', 'new-arrivals').neq('handle', 'sale').order('sort_order').limit(6)
-      .then(({ data }) => setCollections(data || []));
+    const load = async () => {
+      try {
+        const [productsResponse, collectionsResponse] = await Promise.all([
+          apiFetch<{ products: any[] }>('/api/products?featured=true&limit=8'),
+          apiFetch<{ collections: any[] }>('/api/collections'),
+        ]);
+
+        setFeatured((productsResponse.products || []).slice(0, 8));
+        setCollections((collectionsResponse.collections || []).filter((c) => c.handle !== 'new-arrivals' && c.handle !== 'sale').slice(0, 6));
+      } catch (error) {
+        console.error('Failed to load storefront data', error);
+      }
+    };
+
+    load();
   }, []);
 
   return (
